@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory Game I</title>
+
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+
+  <!-- animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+
+  <style>
+    :root{
+      --bg:#9DCC0C;
+      --panel:#083A78;
+      --accent:#D47F0B;
+      --accent-2:#4900F2;
+      --text:#ecf0f3;
+      --muted:#f7f5f5;
+      --card:#7A1122;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background: radial-gradient(1200px 800px at 20% -10%, #1d2147 0%, var(--bg) 50%) fixed;
+      font-family: Inter, sans-serif;
+      color:var(--text); display:flex; flex-direction:column; align-items:center; gap:18px; padding:24px;}
+  
+    header{width:100%; max-width:980px; display:flex; align-items:center; justify-content:space-between;}
+    .title{font-family:'Press Start 2P', cursive; font-size: 28px; text-shadow:0 2px 14px rgba(124,92,255,.35)}
+
+
+    .hud{display:flex; gap:10px; flex-wrap:wrap}
+    .pill{ background:#083A78; border:1px solid rgba(124,92,255,.35);
+      padding:10px 14px; border-radius:999px; }
+    .btn{ background:linear-gradient(135deg, var(--accent), var(--accent-2)); padding:10px 16px; border-radius:12px; font-weight:800; cursor:pointer; }
+
+
+    .board{ display:grid; grid-template-columns: repeat(6, minmax(88px, 1fr)); gap:14px; padding:16px; }
+    @media (max-width: 480px) {
+  body {
+    padding: 12px;
+  }
+
+  .title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .pill {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .board {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    aspect-ratio: 3 / 4;
+  }
+
+  .card-img {
+    object-fit: contain;
+  }
+}
+
+
+    .card{ width:100%; aspect-ratio: 3/4; position:relative; perspective:900px; cursor:pointer; }
+    .card-inner{ position:absolute; inset:0; transition: transform .5s; transform-style:preserve-3d; }
+    .card.flipped .card-inner{ transform: rotateY(180deg) }
+
+
+    .face{ position:absolute; inset:0; display:grid; place-items:center; backface-visibility:hidden; border-radius:14px; overflow:hidden; }
+    .front{ background: var(--card); }
+    .back{ transform: rotateY(180deg); background:#232858; }
+
+
+    .logo{opacity: .95; font-weight: 800; letter-spacing: 5px; color: var(--text); text-transform: uppercase}
+
+
+    /* Imagen dentro de la carta */
+    .card-img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none; /* evita que bloquee el clic */
+    }
+
+
+    .modal{ position:fixed; inset:0; display:none; place-items:center; background:rgba(6,8,20,.55); }
+    .modal.show{ display:grid }
+    .modal.box{ background:var(--panel); border-radius:20px; padding:26px; text-align:left; }
+
+
+   
+    main{ width:100%; max-width:980px; display:grid; grid-template-columns: 260px 1fr; gap:18px }
+    @media (max-width: 920px){ main{ grid-template-columns: 1fr } }
+
+
+    .panel {
+        background: linear-gradient(135deg, rgba(215, 9, 9, 0.766), rgba(55, 193, 13, 0.509));
+        border: 1px solid rgba(175, 12, 69, 0.668);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 12px 28px rgba(6, 156, 104, 0.35);
+    }
+     
+        /* Estilos para el nuevo selector de niveles */
+    #levelSelector {
+        background: #083A78;
+        border: 1px solid rgba(124, 92, 255, 0.35);
+        padding: 9px 14px;
+        border-radius: 999px;
+        color: var(--text);
+        font-family: Inter, sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ecf0f3%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+        background-repeat: no-repeat;
+        background-position: right 14px top 50%;
+        background-size: .65em auto;
+        padding-right: 36px;
+    }
+
+
+    #levelSelector:focus {
+        outline: 2px solid var(--accent);
+    }
+
+
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">LAS TABLAS 😎</div>
+    <div class="hud">
+      <div class="pill">
+          <select id="levelSelector">
+            <option value="0">Tabla del 7</option>
+            <option value="1">Tabla del 8</option>
+            <option value="2">Tabla del 9</option>
+          </select>
+      </div>
+      <div class="pill">⏱️ <strong id="time">00:00</strong></div>
+      <div class="pill">🎯 Movimientos: <strong id="moves">0</strong></div>
+      <button id="reset" class="btn">🔄 Reiniciar</button>
+    </div>
+  </header>
+
+
+  <section class="panel">
+    <div id="board" class="board"></div>
+  </section>
+
+
+  <div id="winModal" class="modal">
+    <div class="modal-box">
+      <h2>🎉 ¡Ganaste!</h2>
+      <p>Tiempo: <span id="finalTime">00:00</span></p>
+      <p>Movimientos: <span id="finalMoves">0</span></p>
+      <button class="btn" id="playAgain">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <!-- 🎶 Música y efectos -->
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+<audio id="flipSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="matchSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="winSound" src="https://actions.google.com/sounds/v1/cartoon/air_horn.ogg"></audio>
+
+
+  <script>
+    const levels = [
+     [ // Nivel 0: Tabla del 7
+       { front: "7 x 1", back: "7" },
+       { front: "7 x 2", back: "14" },
+       { front: "7 x 3", back: "21" },
+       { front: "7 x 4", back: "28" },
+       { front: "7 x 5", back: "35" },
+       { front: "7 x 6", back: "42" },
+       { front: "7 x 7", back: "49" },
+       { front: "7 x 8", back: "56" },
+       { front: "7 x 9", back: "63" },
+       { front: "7 x 10", back: "70" },
+       { front: "7 x 11", back: "77" },
+       { front: "7 x 12", back: "84" },
+     ],
+     [ // Nivel 1: Tabla del 8
+       { front: "8 x 1", back: "8" },
+       { front: "8 x 2", back: "16" },
+       { front: "8 x 3", back: "24" },
+       { front: "8 x 4", back: "32" },
+       { front: "8 x 5", back: "40" },
+       { front: "8 x 6", back: "48" },
+       { front: "8 x 7", back: "56" },
+       { front: "8 x 8", back: "64" },
+       { front: "8 x 9", back: "72" },
+       { front: "8 x 10", back: "80" },
+       { front: "8 x 11", back: "88" },
+       { front: "8 x 12", back: "96" },
+     ],
+     [ // Nivel 2: Tabla del 9
+       { front: "9 x 1", back: "9" },
+       { front: "9 x 2", back: "18" },
+       { front: "9 x 3", back: "27" },
+       { front: "9 x 4", back: "36" },
+       { front: "9 x 5", back: "45" },
+       { front: "9 x 6", back: "54" },
+       { front: "9 x 7", back: "63" },
+       { front: "9 x 8", back: "72" },
+       { front: "9 x 9", back: "81" },
+       { front: "9 x 10", back: "90" },
+       { front: "9 x 11", back: "99" },
+       { front: "9 x 12", back: "108" },
+     ]
+   ];
+
+
+ let PAIRS = 0;
+    let first = null, lock = false, matched = 0, moves = 0;
+    let startTime = null, timerId = null;
+    let currentLevel = 0; // Inicia en el nivel 0 (tabla del 7)
+
+
+
+
+const board = document.getElementById('board');
+const timeEl = document.getElementById('time');
+const movesEl = document.getElementById('moves');
+const resetBtn = document.getElementById('reset');
+const modal = document.getElementById('winModal');
+const finalTime = document.getElementById('finalTime');
+const finalMoves = document.getElementById('finalMoves');
+const playAgain = document.getElementById('playAgain');
+const nextLevelBtn = document.getElementById('nextLevel');
+const levelSelector = document.getElementById('levelSelector'); // Nuevo selector
+
+
+function goToNextLevel() {
+  if (currentLevel < levels.length - 1) {
+    currentLevel++;
+    resetGame();
+  } else {
+    alert("🎉 Has completado todos los niveles. ¡Felicidades!");
+    modal.classList.remove('show');
+  }
+}
+
+
+
+function pad(n) { return n.toString().padStart(2, '0'); }
+    function formatSeconds(s) {
+      const m = Math.floor(s / 60), r = s % 60;
+      return `${pad(m)}:${pad(r)}`;
+    }
+
+
+    function startTimer() {
+      startTime = Date.now();
+      clearInterval(timerId);
+      timerId = setInterval(() => {
+        const secs = Math.floor((Date.now() - startTime) / 1000);
+        timeEl.textContent = formatSeconds(secs);
+      }, 250);
+    }
+
+
+    function stopTimer() {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+
+    function buildDeck() {
+      const pairs = levels[currentLevel];
+      const cards = [];
+
+
+      pairs.forEach((pair, idx) => {
+        cards.push({ id: idx, type: 'question', content: pair.front });
+        cards.push({ id: idx, type: 'answer', content: pair.back });
+      });
+
+
+      shuffle(cards);
+
+
+      PAIRS = pairs.length;
+      board.innerHTML = '';
+
+
+      cards.forEach(cardData => {
+        const card = document.createElement('button');
+        card.className = 'card';
+        card.dataset.id = cardData.id;
+        card.dataset.type = cardData.type;
+        // Se añade la imagen a la cara frontal
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="face back"><div class="logo">${cardData.content}</div></div>
+            <div class="face front">
+               <img src="https://yt3.googleusercontent.com/ytc/AIdro_lRlrs08Nltew_BFkbEqHinXvuAmiDHf-zQ39tlIEzIhu4=s900-c-k-c0x00ffffff-no-rj" alt="Card Front Image" class="card-img">
+            </div>
+          </div>`;
+
+        card.addEventListener('click', onFlip);
+        board.appendChild(card);
+      });
+
+
+      // Actualiza el título del juego según el nivel
+      document.querySelector('.title').textContent = `TABLA DEL ${7 + currentLevel} 😎`;
+    }
+
+
+    function resetGame() {
+      first = null; lock = false; matched = 0; moves = 0;
+      movesEl.textContent = '0';
+      timeEl.textContent = '00:00';
+      stopTimer();
+      startTimer();
+      buildDeck();
+      modal.classList.remove('show');
+      bgMusic.currentTime = 0;
+      bgMusic.play();
+
+    }
+
+
+    function onFlip(e) {
+      const card = e.currentTarget;
+      if (lock || card.classList.contains('flipped') || card.classList.contains('disabled')) return;
+      card.classList.add('flipped');
+      flipSound.currentTime = 0;
+      flipSound.play();
+
+
+
+      if (!first) {
+        first = card;
+        return;
+      }
+
+
+      moves++;
+      movesEl.textContent = moves;
+
+
+      const same = first.dataset.id === card.dataset.id && first !== card;
+      if (same) {
+        card.classList.add('disabled');
+        first.classList.add('disabled');
+        matchSound.currentTime = 0;
+        matchSound.play();
+
+        matched++;
+        first = null;
+
+
+        if (matched === PAIRS) {
+          setTimeout(() => {
+            stopTimer();
+            finalMoves.textContent = moves;
+            const secs = Math.floor((Date.now() - startTime) / 1000);
+            finalTime.textContent = formatSeconds(secs);
+            winSound.currentTime = 0;
+            winSound.play();
+
+            modal.classList.add('show');
+          }, 300);
+        }
+      } else {
+        lock = true;
+        setTimeout(() => {
+          card.classList.remove('flipped');
+          first.classList.remove('flipped');
+          first = null;
+          lock = false;
+        }, 700);
+      }
+    }
+
+
+    // Event listener para el cambio de nivel
+    levelSelector.addEventListener('change', () => {
+        currentLevel = parseInt(levelSelector.value, 10);
+        resetGame();
+    });
+
+
+    resetBtn.addEventListener('click', resetGame);
+    playAgain.addEventListener('click', resetGame);
+
+
+    // Inicia el juego
+    buildDeck();
+    startTimer();
+
+    // Obtener referencias a los audios
+const bgMusic = document.getElementById('bgMusic');
+const flipSound = document.getElementById('flipSound');
+const matchSound = document.getElementById('matchSound');
+const winSound = document.getElementById('winSound');
+
+// Activar música al primer clic (interacción del usuario)
+function enableMusicOnce() {
+  bgMusic.volume = 0.3;
+  bgMusic.play().catch((err) => {
+    console.log("No se pudo reproducir automáticamente. Se necesita interacción del usuario.");
+  });
+
+  // Solo queremos activar esto una vez
+  document.removeEventListener('click', enableMusicOnce);
+}
+document.addEventListener('click', enableMusicOnce);
+
+  </script>
+</body>
+</html>
